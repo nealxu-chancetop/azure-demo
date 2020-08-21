@@ -1,0 +1,77 @@
+apply from: file("${rootDir}/gradle/project.gradle")
+
+subprojects {
+    group = "com.foodtruck"
+    version = '1.0.0'
+
+    repositories {
+        maven {
+            url 'https://neowu.github.io/maven-repo/'
+            content {
+                includeGroup 'core.framework'
+            }
+        }
+    }
+
+    if (!plugins.hasPlugin(JavaPlugin)) return
+    sourceSets {
+        dev {
+            java {
+                srcDir 'src/dev/java'
+            }
+            compileClasspath += sourceSets.main.runtimeClasspath
+            runtimeClasspath += sourceSets.main.runtimeClasspath
+        }
+    }
+
+    tasks.named('pmdDev').configure({
+        group = 'verification'
+        ignoreFailures = true
+    })
+
+    tasks.named('spotbugsDev').configure({
+        group = 'verification'
+        ignoreFailures = true
+    })
+}
+
+def coreNGVersion = '7.4.14'
+def azureCosmosVersion = '4.0.1'
+
+
+configure(subprojects.findAll { it.name.endsWith('-library') }) {
+    dependencies {
+        implementation "core.framework:core-ng:${coreNGVersion}"
+        testImplementation "core.framework:core-ng-test:${coreNGVersion}"
+    }
+}
+
+configure(subprojects.findAll {
+    it.name.endsWith('-service') || it.name.matches(/(-|\w)+-service-v\d+$/) || it.name.endsWith('-api') || it.name.endsWith('-site')
+}) {
+    apply from: file("${rootDir}/gradle/app.gradle")
+    dependencies {
+        implementation "core.framework:core-ng:${coreNGVersion}"
+        testImplementation "core.framework:core-ng-test:${coreNGVersion}"
+    }
+}
+
+configure(subprojects.findAll { it.name.endsWith('service-interface') || it.name.matches(/(-|\w)+-interface-v\d+$/) || it.name.endsWith('site-interface') || it.name.endsWith('api-interface') }) {
+    dependencies {
+        implementation "core.framework:core-ng-api:${coreNGVersion}"
+    }
+}
+
+configure([project(':core-ng-cosmos')]) {
+    dependencies {
+        implementation "core.framework:core-ng:${coreNGVersion}"
+        implementation "com.azure:azure-cosmos:${azureCosmosVersion}"
+    }
+}
+configure([project(':cosmos-service')]) {
+    dependencies {
+        implementation project(':core-ng-cosmos')
+        implementation project(':cosmos-service-interface')
+        implementation "com.azure:azure-cosmos:${azureCosmosVersion}"
+    }
+}

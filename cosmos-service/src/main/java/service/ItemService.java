@@ -20,9 +20,9 @@ import java.util.UUID;
 public class ItemService {
     private final Logger logger = LoggerFactory.getLogger(ItemService.class);
     @Inject
-    CosmosRepository<Item> itemCollection;
+    CosmosRepository<Item> itemRepository;
     @Inject
-    CosmosRepository<BOMHeader> bomHeaderCollection;
+    CosmosRepository<BOMHeader> bomHeaderRepository;
 
     public void simpleCURDTest() {
         Item item = new Item();
@@ -48,15 +48,15 @@ public class ItemService {
         item.createdTime = now.toEpochSecond();
         item.updatedBy = "neal";
         item.updatedTime = now.toEpochSecond();
-        itemCollection.insert(item);
+        itemRepository.insert(item);
         logger.info("insert");
 
-        item = itemCollection.get(id).orElseThrow();
+        item = itemRepository.get(id).orElseThrow();
 
         item.updatedBy = "cosmos-test";
         item.updatedTime = ZonedDateTime.now().toEpochSecond();
-        itemCollection.upsert(item);
-        itemCollection.delete(id);
+        itemRepository.upsert(item);
+        itemRepository.delete(id);
     }
 
     public void initTestData() {
@@ -101,9 +101,9 @@ public class ItemService {
         bomHeader1.createdBy = "neal";
         bomHeader1.createdTime = ZonedDateTime.now().toEpochSecond();
 
-        itemCollection.upsert(item1);
-        itemCollection.upsert(item2);
-        bomHeaderCollection.upsert(bomHeader1);
+        itemRepository.upsert(item1);
+        itemRepository.upsert(item2);
+        bomHeaderRepository.upsert(bomHeader1);
     }
 
     private Item getItem2(ZonedDateTime now, Item.UnitConversion u1) {
@@ -129,30 +129,30 @@ public class ItemService {
     public void testSearch() {
         //select id
         logger.info("id");
-        itemCollection.get("500001").ifPresent(item -> {
+        itemRepository.get("500001").ifPresent(item -> {
             logger.info("get by id, {}", item.name);
         });
 
-        itemCollection.findOne(new SqlQuerySpec("select * from c where c.id = '500001'")).ifPresent(item -> {
+        itemRepository.findOne(new SqlQuerySpec("select * from c where c.id = '500001'")).ifPresent(item -> {
             logger.info("get by find one, {}", item.name);
         });
 
         //select name like
         logger.info("name like");
-        itemCollection.find(new SqlQuerySpec("select * from c where CONTAINS(c.name,'test',false) ORDER BY c.createdTime DESC")).forEach(item -> {
+        itemRepository.find(new SqlQuerySpec("select * from c where CONTAINS(c.name,'test',false) ORDER BY c.createdTime DESC")).forEach(item -> {
             logger.info(item.name);
         });
 
         //select inner list
         logger.info("select inner list");
         //can't use  SELECT * FROM c.restaurantIds ORDER BY c.createdTime DESC
-        itemCollection.find(new SqlQuerySpec("SELECT * FROM c.restaurantIds"), List.class).forEach(list -> {
+        itemRepository.find(new SqlQuerySpec("SELECT * FROM c.restaurantIds"), List.class).forEach(list -> {
             logger.info("{}, size:{}", list, list.size());
         });
 
         //group by   don't support!!!!
 //        logger.info("group by");
-//        itemCollection.select("SELECT c.status FROM c GROUP BY c.status", JsonNode.class).forEach(node -> {
+//        itemRepository.select("SELECT c.status FROM c GROUP BY c.status", JsonNode.class).forEach(node -> {
 //            logger.info("{} - {}", node.get("status").asText(), node.get("total").asLong());
 //        });
 
@@ -163,19 +163,19 @@ public class ItemService {
 
         //offset must Min(0)
         logger.info("offset limit");
-        itemCollection.find(new SqlQuerySpec("SELECT * from c OFFSET 0 LIMIT 1")).forEach(item -> {
+        itemRepository.find(new SqlQuerySpec("SELECT * from c OFFSET 0 LIMIT 1")).forEach(item -> {
             logger.info("id:{}  name:{}", item.id, item.name);
         });
 
         //select arrays[:index]
         logger.info("select arrays[:index]");
-        bomHeaderCollection.find(new SqlQuerySpec("Select * from c WHERE c.bomLines[0].itemNumber = '500001'")).forEach(bomHeader -> {
+        bomHeaderRepository.find(new SqlQuerySpec("Select * from c WHERE c.bomLines[0].itemNumber = '500001'")).forEach(bomHeader -> {
             logger.info("id:{}  name:{}", bomHeader.id, bomHeader.name);
         });
 
         //special char
         logger.info("special char");
-        bomHeaderCollection.find(new SqlQuerySpec("SELECT * FROM c WHERE c['name'] = 'bom1'")).forEach(bomHeader -> {
+        bomHeaderRepository.find(new SqlQuerySpec("SELECT * FROM c WHERE c['name'] = 'bom1'")).forEach(bomHeader -> {
             bomHeader.bomLines.forEach(bomLine -> logger.info("line order:{} , item_number:{}", bomLine.order, bomLine.itemNumber));
         });
     }

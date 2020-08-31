@@ -5,7 +5,7 @@ import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.cosmos.CosmosDatabase;
 import core.framework.cosmos.Cosmos;
-import core.framework.cosmos.CosmosCollection;
+import core.framework.cosmos.CosmosRepository;
 import core.framework.internal.log.LogManager;
 import core.framework.util.StopWatch;
 import org.slf4j.Logger;
@@ -71,25 +71,13 @@ public class CosmosImpl implements Cosmos {
         this.tooManyRowsReturnedThreshold = threshold;
     }
 
-    public <T> CosmosCollection<T> collection(Class<T> entityClass) {
+    public <T> CosmosRepository<T> entity(Class<T> entityClass) {
         var watch = new StopWatch();
         try {
-//            new MongoClassValidator(entityClass).validateEntityClass();
-//            codecs.registerEntity(entityClass);
-            return new CosmosCollectionImpl<>(this, entityClass);
+            new CosmosClassValidator(entityClass).validateEntityClass();
+            return new CosmosEntityImpl<>(this, entityClass);
         } finally {
-            logger.info("register mongo entity, entityClass={}, elapsed={}", entityClass.getCanonicalName(), watch.elapsed());
-        }
-    }
-
-    public <T> void view(Class<T> viewClass) {
-        var watch = new StopWatch();
-        try {
-//            new MongoClassValidator(viewClass).validateViewClass();
-//            codecs.registerView(viewClass);
-            throw new Error("Can't support view for now");
-        } finally {
-            logger.info("register mongo view, viewClass={}, elapsed={}", viewClass.getCanonicalName(), watch.elapsed());
+            logger.info("register cosmos entity, entityClass={}, elapsed={}", entityClass.getCanonicalName(), watch.elapsed());
         }
     }
 }

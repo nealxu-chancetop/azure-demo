@@ -8,7 +8,7 @@ import java.util.Optional;
 /**
  * @author Neal
  */
-public interface CosmosCollection<T> {
+public interface CosmosRepository<T> {
     Optional<T> get(String id);
 
     void upsert(T entity);

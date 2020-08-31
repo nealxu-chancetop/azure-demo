@@ -7,8 +7,8 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.models.SqlQuerySpec;
 import com.azure.cosmos.util.CosmosPagedIterable;
-import core.framework.cosmos.Collection;
-import core.framework.cosmos.CosmosCollection;
+import core.framework.cosmos.Entity;
+import core.framework.cosmos.CosmosRepository;
 import core.framework.internal.validate.Validator;
 import core.framework.log.ActionLogContext;
 import core.framework.log.Markers;
@@ -25,20 +25,20 @@ import java.util.Optional;
 /**
  * @author Neal
  */
-public class CosmosCollectionImpl<T> implements CosmosCollection<T> {
-    private final Logger logger = LoggerFactory.getLogger(CosmosCollectionImpl.class);
+public class CosmosEntityImpl<T> implements CosmosRepository<T> {
+    private final Logger logger = LoggerFactory.getLogger(CosmosEntityImpl.class);
     private final CosmosImpl cosmos;
     private final Class<T> entityClass;
-    private final String collectionName;
+    private final String entityName;
     private final Validator validator;
     private CosmosContainer cosmosContainer;
 
-    public CosmosCollectionImpl(CosmosImpl cosmos, Class<T> entityClass) {
+    public CosmosEntityImpl(CosmosImpl cosmos, Class<T> entityClass) {
         this.cosmos = cosmos;
         this.entityClass = entityClass;
         this.validator = Validator.of(entityClass);
 
-        this.collectionName = entityClass.getAnnotation(Collection.class).name();
+        this.entityName = entityClass.getAnnotation(Entity.class).name();
     }
 
     @Override
@@ -54,8 +54,8 @@ public class CosmosCollectionImpl<T> implements CosmosCollection<T> {
         } finally {
             long elapsed = watch.elapsed();
             ActionLogContext.track("cosmos", elapsed, returnedDocs, 0);
-            logger.debug("get, collection={}, id={}, returnedDocs={}, elapsed={}",
-                collectionName,
+            logger.debug("get, entity={}, id={}, returnedDocs={}, elapsed={}",
+                entityName,
                 id,
                 returnedDocs,
                 elapsed);
@@ -72,7 +72,7 @@ public class CosmosCollectionImpl<T> implements CosmosCollection<T> {
         } finally {
             long elapsed = watch.elapsed();
             ActionLogContext.track("cosmos", elapsed, 0, 1);
-            logger.debug("upsert, collection={}, elapsed={}", collectionName, elapsed);
+            logger.debug("upsert, entity={}, elapsed={}", entityName, elapsed);
             checkSlowOperation(elapsed);
         }
     }
@@ -86,7 +86,7 @@ public class CosmosCollectionImpl<T> implements CosmosCollection<T> {
         } finally {
             long elapsed = watch.elapsed();
             ActionLogContext.track("cosmos", elapsed, 0, 1);
-            logger.debug("insert, collection={}, elapsed={}", collectionName, elapsed);
+            logger.debug("insert, entity={}, elapsed={}", entityName, elapsed);
             checkSlowOperation(elapsed);
         }
     }
@@ -140,7 +140,7 @@ public class CosmosCollectionImpl<T> implements CosmosCollection<T> {
             int size = results.size();
             ActionLogContext.track("cosmos", elapsed, size, 0);
             logger.debug("find, clazz={}, sql={}, params={}, returnedDocs={}, elapsed={}",
-                collectionName,
+                entityName,
                 query.getQueryText(),
                 query.getParameters(),
                 size,
@@ -157,7 +157,7 @@ public class CosmosCollectionImpl<T> implements CosmosCollection<T> {
         } finally {
             long elapsed = watch.elapsed();
             ActionLogContext.track("mongo", elapsed, 0, 1);
-            logger.debug("delete, collection={}, id={}, elapsed={}", collectionName, id, elapsed);
+            logger.debug("delete, entity={}, id={}, elapsed={}", entityName, id, elapsed);
             checkSlowOperation(elapsed);
         }
     }
@@ -181,7 +181,7 @@ public class CosmosCollectionImpl<T> implements CosmosCollection<T> {
 
     private CosmosContainer cosmosContainer() {
         if (this.cosmosContainer == null) {
-            this.cosmosContainer = cosmos.database.getContainer(collectionName);
+            this.cosmosContainer = cosmos.database.getContainer(entityName);
         }
         return cosmosContainer;
     }

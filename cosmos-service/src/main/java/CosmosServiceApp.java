@@ -24,8 +24,8 @@ public class CosmosServiceApp extends App {
         cosmosConfig.key(requiredProperty("cosmos.key"));
         cosmosConfig.preferredRegions(List.of(requiredProperty("cosmos.preferredRegions").split(",")));
 
-        cosmosConfig.collection(Item.class);
-        cosmosConfig.collection(BOMHeader.class);
+        cosmosConfig.entity(Item.class);
+        cosmosConfig.entity(BOMHeader.class);
 
 
         bind(ItemService.class);

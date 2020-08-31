@@ -1,8 +1,8 @@
 package core.framework.cosmos.module;
 
-import core.framework.cosmos.Collection;
+import core.framework.cosmos.Entity;
 import core.framework.cosmos.Cosmos;
-import core.framework.cosmos.CosmosCollection;
+import core.framework.cosmos.CosmosRepository;
 import core.framework.cosmos.impl.CosmosImpl;
 import core.framework.internal.module.Config;
 import core.framework.internal.module.ModuleContext;
@@ -47,7 +47,7 @@ public class CosmosConfig extends Config {
         if (databaseId == null) throw new Error("DatabaseId not configured");
         if (preferredRegions == null) throw new Error("PreferredRegions not configured");
         if (!entityAdded)
-            throw new Error("cosmos is configured but no collection added, please remove unnecessary config, name=" + name);
+            throw new Error("cosmos is configured but no entity added, please remove unnecessary config, name=" + name);
     }
 
     public void endpoint(String endpoint) {
@@ -87,15 +87,10 @@ public class CosmosConfig extends Config {
         cosmos.tooManyRowsReturnedThreshold(threshold);
     }
 
-    public <T> void collection(Class<T> entityClass) {
-        if (entityClass == null || entityClass.getAnnotation(Collection.class) == null)
-            throw new Error("entity must have Collection annotation");
-        context.beanFactory.bind(Types.generic(CosmosCollection.class, entityClass), name, cosmos.collection(entityClass));
-        entityAdded = true;
-    }
-
-    public <T> void view(Class<T> viewClass) {
-        cosmos.view(viewClass);
+    public <T> void entity(Class<T> entityClass) {
+        if (entityClass == null || entityClass.getAnnotation(Entity.class) == null)
+            throw new Error("entity must have Entity annotation");
+        context.beanFactory.bind(Types.generic(CosmosRepository.class, entityClass), name, cosmos.entity(entityClass));
         entityAdded = true;
     }
 }

@@ -1,7 +1,7 @@
 package service;
 
 import com.azure.cosmos.models.SqlQuerySpec;
-import core.framework.cosmos.CosmosCollection;
+import core.framework.cosmos.CosmosRepository;
 import core.framework.inject.Inject;
 import domain.BOMHeader;
 import domain.Item;
@@ -20,9 +20,9 @@ import java.util.UUID;
 public class ItemService {
     private final Logger logger = LoggerFactory.getLogger(ItemService.class);
     @Inject
-    CosmosCollection<Item> itemCollection;
+    CosmosRepository<Item> itemCollection;
     @Inject
-    CosmosCollection<BOMHeader> bomHeaderCollection;
+    CosmosRepository<BOMHeader> bomHeaderCollection;
 
     public void simpleCURDTest() {
         Item item = new Item();
@@ -60,13 +60,12 @@ public class ItemService {
     }
 
     public void initTestData() {
-        ZonedDateTime now = ZonedDateTime.now();
-
         Item item1 = new Item();
         item1.id = "500001";
         item1.searchName = "test";
         item1.name = "test1";
         item1.storageDimensionGroup = StorageDimensionGroup.WMS;
+        item1.storageDimensionGroups = List.of(StorageDimensionGroup.WMS, StorageDimensionGroup.WMS_SITEPP);
         item1.status = ItemStatus.NEW;
         item1.restaurantIds = List.of("r1", "r2");
         Item.UnitConversion u1 = new Item.UnitConversion();
@@ -75,12 +74,11 @@ public class ItemService {
         u1.toQuantity = 2d;
         u1.toUnit = "ea";
         item1.unitConversions = List.of(u1);
-        item1.createdTime = now.toEpochSecond();
+        item1.createdTime = ZonedDateTime.now().toEpochSecond();
         item1.updatedBy = "neal";
-        item1.updatedTime = now.toEpochSecond();
+        item1.updatedTime = ZonedDateTime.now().toEpochSecond();
 
-        Item item2 = getItem2(now, u1);
-
+        Item item2 = getItem2(ZonedDateTime.now(), u1);
         BOMHeader bomHeader1 = new BOMHeader();
         bomHeader1.id = "50000101";
         bomHeader1.name = "bom1";
@@ -101,12 +99,11 @@ public class ItemService {
         bomLine2.manageInventory = Boolean.FALSE;
         bomHeader1.bomLines = List.of(bomLine1, bomLine2);
         bomHeader1.createdBy = "neal";
-        bomHeader1.createdTime = now.toEpochSecond();
+        bomHeader1.createdTime = ZonedDateTime.now().toEpochSecond();
 
         itemCollection.upsert(item1);
         itemCollection.upsert(item2);
         bomHeaderCollection.upsert(bomHeader1);
-
     }
 
     private Item getItem2(ZonedDateTime now, Item.UnitConversion u1) {

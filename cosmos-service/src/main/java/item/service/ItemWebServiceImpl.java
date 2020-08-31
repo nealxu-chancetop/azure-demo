@@ -12,9 +12,15 @@ public class ItemWebServiceImpl implements ItemWebService {
     ItemService itemService;
 
     @Override
+    public void test() {
+        itemService.simpleCURDTest();
+    }
+
+    @Override
     public void init() {
         itemService.initTestData();
     }
+
 
     @Override
     public void search() {

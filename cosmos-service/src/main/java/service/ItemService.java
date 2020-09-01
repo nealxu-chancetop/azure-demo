@@ -65,7 +65,7 @@ public class ItemService {
         item1.searchName = "test";
         item1.name = "test1";
         item1.storageDimensionGroup = StorageDimensionGroup.WMS;
-        item1.storageDimensionGroups = List.of(StorageDimensionGroup.WMS, StorageDimensionGroup.WMS_SITEPP);
+        item1.storageDimensionGroups = List.of(StorageDimensionGroup.WMS, StorageDimensionGroup.WMS_SITEPP, StorageDimensionGroup.WMS_COMPPP);
         item1.status = ItemStatus.NEW;
         item1.restaurantIds = List.of("r1", "r2");
         Item.UnitConversion u1 = new Item.UnitConversion();

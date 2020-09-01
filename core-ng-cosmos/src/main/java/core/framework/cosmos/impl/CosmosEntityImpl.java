@@ -49,7 +49,7 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
         int returnedDocs = 0;
         try {
             CosmosItemResponse<T> result = cosmosContainer().readItem(id, new PartitionKey(id), entityClass);
-            if (result != null) returnedDocs = 1;
+            if (result != null && result.getItem() != null) returnedDocs = 1;
             return result == null ? Optional.empty() : Optional.ofNullable(result.getItem());
         } finally {
             long elapsed = watch.elapsed();
@@ -156,7 +156,7 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
             cosmosContainer().deleteItem(id, new PartitionKey(id), new CosmosItemRequestOptions());
         } finally {
             long elapsed = watch.elapsed();
-            ActionLogContext.track("mongo", elapsed, 0, 1);
+            ActionLogContext.track("cosmos", elapsed, 0, 1);
             logger.debug("delete, entity={}, id={}, elapsed={}", entityName, id, elapsed);
             checkSlowOperation(elapsed);
         }

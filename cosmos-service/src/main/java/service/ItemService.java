@@ -1,5 +1,6 @@
 package service;
 
+import com.azure.cosmos.models.SqlParameter;
 import com.azure.cosmos.models.SqlQuerySpec;
 import core.framework.cosmos.CosmosRepository;
 import core.framework.inject.Inject;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,14 +49,14 @@ public class ItemService {
         ZonedDateTime now = ZonedDateTime.now();
         item.createdTime = now.toEpochSecond();
         item.updatedBy = "neal";
-        item.updatedTime = now.toEpochSecond();
+        item.updatedTime = now;
         itemRepository.insert(item);
         logger.info("insert");
 
         item = itemRepository.get(id).orElseThrow();
 
         item.updatedBy = "cosmos-test";
-        item.updatedTime = ZonedDateTime.now().toEpochSecond();
+        item.updatedTime = ZonedDateTime.now();
         itemRepository.upsert(item);
         itemRepository.delete(id);
     }
@@ -76,7 +78,7 @@ public class ItemService {
         item1.unitConversions = List.of(u1);
         item1.createdTime = ZonedDateTime.now().toEpochSecond();
         item1.updatedBy = "neal";
-        item1.updatedTime = ZonedDateTime.now().toEpochSecond();
+        item1.updatedTime = ZonedDateTime.now();
 
         Item item2 = getItem2(ZonedDateTime.now(), u1);
         BOMHeader bomHeader1 = new BOMHeader();
@@ -122,7 +124,7 @@ public class ItemService {
         item2.unitConversions = List.of(u1, u2);
         item2.createdTime = now.toEpochSecond();
         item2.updatedBy = "neal";
-        item2.updatedTime = now.toEpochSecond();
+        item2.updatedTime = now;
         return item2;
     }
 
@@ -160,7 +162,6 @@ public class ItemService {
     }
 
     private void test2() {
-
         //offset must Min(0)
         logger.info("offset limit");
         itemRepository.find(new SqlQuerySpec("SELECT * from c OFFSET 0 LIMIT 1")).forEach(item -> {
@@ -177,6 +178,15 @@ public class ItemService {
         logger.info("special char");
         bomHeaderRepository.find(new SqlQuerySpec("SELECT * FROM c WHERE c['name'] = 'bom1'")).forEach(bomHeader -> {
             bomHeader.bomLines.forEach(bomLine -> logger.info("line order:{} , item_number:{}", bomLine.order, bomLine.itemNumber));
+        });
+
+        //search date
+        logger.info("search date");
+        SqlQuerySpec sqlQuerySpec = new SqlQuerySpec("SELECT * FROM c WHERE c.updated_time < @updatedTime")
+            .setParameters(List.of(new SqlParameter("@updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ISO_ZONED_DATE_TIME))));
+        itemRepository.find(sqlQuerySpec).forEach(item -> {
+            logger.info("id:{}  name:{}", item.id, item.name);
+
         });
     }
 }

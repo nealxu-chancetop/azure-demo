@@ -1,8 +1,9 @@
 package core.framework.cosmos.module;
 
-import core.framework.cosmos.Entity;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import core.framework.cosmos.Cosmos;
 import core.framework.cosmos.CosmosRepository;
+import core.framework.cosmos.Entity;
 import core.framework.cosmos.impl.CosmosImpl;
 import core.framework.internal.module.Config;
 import core.framework.internal.module.ModuleContext;
@@ -35,6 +36,9 @@ public class CosmosConfig extends Config {
         this.name = name;
 
         cosmos = new CosmosImpl();
+        //enable cosmos jsr310
+        com.azure.cosmos.implementation.Utils.getSimpleObjectMapper().registerModule(new JavaTimeModule());
+
         this.context.startupHook.add(cosmos::initialize);
         this.context.shutdownHook.add(ShutdownHook.STAGE_7, timeout -> cosmos.close());
         context.beanFactory.bind(Cosmos.class, name, cosmos);
@@ -74,7 +78,8 @@ public class CosmosConfig extends Config {
     public void preferredRegions(List<String> preferredRegions) {
         if (this.preferredRegions != null)
             throw new Error(format("cosmos databaseId is already configured, name={}, databaseId={}, previous={}", name, databaseId, this.databaseId));
-        if (preferredRegions == null || preferredRegions.isEmpty()) throw new Error("cosmos preferredRegion can't empty");
+        if (preferredRegions == null || preferredRegions.isEmpty())
+            throw new Error("cosmos preferredRegion can't empty");
         this.preferredRegions = preferredRegions;
         cosmos.preferredRegions(preferredRegions);
     }

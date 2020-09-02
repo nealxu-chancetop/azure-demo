@@ -64,10 +64,12 @@ configure(subprojects.findAll { it.name.endsWith('service-interface') || it.name
 
 configure([project(':core-ng-cosmos')]) {
     dependencies {
-        implementation "core.framework:core-ng:${coreNGVersion}"
         implementation "com.azure:azure-cosmos:${azureCosmosVersion}"
+        implementation "core.framework:core-ng:${coreNGVersion}"
+        testImplementation "core.framework:core-ng-test:${coreNGVersion}"
     }
 }
+
 configure([project(':cosmos-service')]) {
     dependencies {
         implementation project(':core-ng-cosmos')

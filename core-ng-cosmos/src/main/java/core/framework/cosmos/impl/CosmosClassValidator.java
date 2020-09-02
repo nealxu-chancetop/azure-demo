@@ -11,6 +11,7 @@ import core.framework.util.Maps;
 import core.framework.util.Sets;
 
 import java.lang.reflect.Field;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +28,7 @@ public class CosmosClassValidator implements ClassVisitor {
 
     public CosmosClassValidator(Class<?> entityClass) {
         validator = new ClassValidator(entityClass);
-        validator.allowedValueClasses = Set.of(String.class, Boolean.class, Integer.class, Long.class, Double.class);
+        validator.allowedValueClasses = Set.of(String.class, Boolean.class, Integer.class, Long.class, Double.class, ZonedDateTime.class);
         validator.allowChild = true;
         validator.visitor = this;
     }

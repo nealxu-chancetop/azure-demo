@@ -6,6 +6,7 @@ import core.framework.api.validate.NotNull;
 import core.framework.cosmos.Entity;
 import core.framework.cosmos.Id;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
@@ -45,7 +46,7 @@ public class Item {
 
     @NotNull
     @JsonProperty("created_time")
-    public Long createdTime; //only support UTC
+    public Long createdTime; //long
 
     @NotNull
     @NotBlank
@@ -54,7 +55,8 @@ public class Item {
 
     @NotNull
     @JsonProperty("updated_time")
-    public Long updatedTime;
+//    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSX") //Standard utc date format
+    public ZonedDateTime updatedTime;
 
     public static class UnitConversion {
         @NotNull

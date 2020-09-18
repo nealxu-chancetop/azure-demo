@@ -1,6 +1,8 @@
 package core.framework.cosmos.module;
 
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.azure.cosmos.implementation.Utils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import core.framework.cosmos.Cosmos;
 import core.framework.cosmos.CosmosRepository;
 import core.framework.cosmos.Entity;
@@ -37,7 +39,10 @@ public class CosmosConfig extends Config {
 
         cosmos = new CosmosImpl();
         //enable cosmos jsr310
-        com.azure.cosmos.implementation.Utils.getSimpleObjectMapper().registerModule(new JavaTimeModule());
+        ObjectMapper objectMapper = Utils.getSimpleObjectMapper();
+        objectMapper.registerModule(new ZonedDateTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
 
         this.context.startupHook.add(cosmos::initialize);
         this.context.shutdownHook.add(ShutdownHook.STAGE_7, timeout -> cosmos.close());

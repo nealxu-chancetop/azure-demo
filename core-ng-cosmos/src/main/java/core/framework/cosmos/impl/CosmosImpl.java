@@ -29,7 +29,14 @@ public class CosmosImpl implements Cosmos {
     public CosmosDatabase database;
 
     public void initialize() {
-        this.database = createDatabase();
+        this.database = getDatabase();
+    }
+
+    public CosmosDatabase getDatabase() {
+        if (this.database == null) {
+            this.database = createDatabase();
+        }
+        return this.database;
     }
 
     public void close() {
@@ -53,10 +60,6 @@ public class CosmosImpl implements Cosmos {
 
     public void databaseId(String databaseId) {
         this.databaseId = databaseId;
-    }
-
-    public void databaseId(List<String> preferredRegions) {
-        cosmosClientBuilder.preferredRegions(preferredRegions);
     }
 
     public void preferredRegions(List<String> preferredRegions) {

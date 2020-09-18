@@ -4,11 +4,12 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import core.framework.cosmos.Id;
+import core.framework.cosmos.module.ZonedDateTimeModule;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 /**
  * @author Neal
@@ -17,10 +18,12 @@ public class FormatTest {
     @Test
     public void formatDate() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.registerModule(new ZonedDateTimeModule());
         Item item = new Item();
         item.id = "1";
-        item.updatedTime = new Date();
-        item.localDateTime = LocalDateTime.now();
+        item.updatedTime = ZonedDateTime.now();
+        item.createdTime = ZonedDateTime.now();
         mapper.writeValueAsString(item);
     }
 
@@ -30,12 +33,10 @@ public class FormatTest {
 
         @JsonProperty("updated_time")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSX")
-        public Date updatedTime;
+        public ZonedDateTime updatedTime;
 
-        @JsonProperty("updated_time2")
-
-        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSX")
-        public LocalDateTime localDateTime;
+        @JsonProperty("created_time")
+        public ZonedDateTime createdTime;
 
     }
 }

@@ -181,7 +181,7 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
 
     private CosmosContainer cosmosContainer() {
         if (this.cosmosContainer == null) {
-            this.cosmosContainer = cosmos.database.getContainer(entityName);
+            this.cosmosContainer = cosmos.getDatabase().getContainer(entityName);
         }
         return cosmosContainer;
     }

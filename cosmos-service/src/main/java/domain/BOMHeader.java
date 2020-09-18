@@ -6,6 +6,7 @@ import core.framework.api.validate.NotNull;
 import core.framework.cosmos.Entity;
 import core.framework.cosmos.Id;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
@@ -39,7 +40,7 @@ public class BOMHeader {
 
     @NotNull
     @JsonProperty("created_time")
-    public Long createdTime;
+    public ZonedDateTime createdTime;
 
     public static class BomLine {
         @NotNull

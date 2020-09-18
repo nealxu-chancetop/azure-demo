@@ -47,7 +47,7 @@ public class ItemService {
         u2.toUnit = "g";
         item.unitConversions = List.of(u1, u2);
         ZonedDateTime now = ZonedDateTime.now();
-        item.createdTime = now.toEpochSecond();
+        item.createdTime = now;
         item.updatedBy = "neal";
         item.updatedTime = now;
         itemRepository.insert(item);
@@ -76,9 +76,9 @@ public class ItemService {
         u1.toQuantity = 2d;
         u1.toUnit = "ea";
         item1.unitConversions = List.of(u1);
-        item1.createdTime = ZonedDateTime.now().toEpochSecond();
+        item1.createdTime = ZonedDateTime.now();
         item1.updatedBy = "neal";
-        item1.updatedTime = ZonedDateTime.now();
+        item1.updatedTime = ZonedDateTime.now().plusDays(1);
 
         Item item2 = getItem2(ZonedDateTime.now(), u1);
         BOMHeader bomHeader1 = new BOMHeader();
@@ -101,7 +101,7 @@ public class ItemService {
         bomLine2.manageInventory = Boolean.FALSE;
         bomHeader1.bomLines = List.of(bomLine1, bomLine2);
         bomHeader1.createdBy = "neal";
-        bomHeader1.createdTime = ZonedDateTime.now().toEpochSecond();
+        bomHeader1.createdTime = ZonedDateTime.now();
 
         itemRepository.upsert(item1);
         itemRepository.upsert(item2);
@@ -122,9 +122,9 @@ public class ItemService {
         u2.toQuantity = 2d;
         u2.toUnit = "ea";
         item2.unitConversions = List.of(u1, u2);
-        item2.createdTime = now.toEpochSecond();
+        item2.createdTime = now;
         item2.updatedBy = "neal";
-        item2.updatedTime = now;
+        item2.updatedTime = now.plusDays(1);
         return item2;
     }
 
@@ -179,14 +179,23 @@ public class ItemService {
         bomHeaderRepository.find(new SqlQuerySpec("SELECT * FROM c WHERE c['name'] = 'bom1'")).forEach(bomHeader -> {
             bomHeader.bomLines.forEach(bomLine -> logger.info("line order:{} , item_number:{}", bomLine.order, bomLine.itemNumber));
         });
+    }
 
-        //search date
-        logger.info("search date");
+    public void searchByDate() {
+        //search date by string
+        logger.info("search date by string");
         SqlQuerySpec sqlQuerySpec = new SqlQuerySpec("SELECT * FROM c WHERE c.updated_time < @updatedTime")
-            .setParameters(List.of(new SqlParameter("@updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ISO_ZONED_DATE_TIME))));
+            .setParameters(List.of(new SqlParameter("@updatedTime", ZonedDateTime.now().plusHours(1).format(DateTimeFormatter.ISO_ZONED_DATE_TIME))));
         itemRepository.find(sqlQuerySpec).forEach(item -> {
             logger.info("id:{}  name:{}", item.id, item.name);
+        });
 
+        //search date by zonedDateTime
+        logger.info("search date by zonedDateTime");
+        SqlQuerySpec sqlQuerySpec2 = new SqlQuerySpec("SELECT * FROM c WHERE c.updated_time > @updatedTime")
+            .setParameters(List.of(new SqlParameter("@updatedTime", ZonedDateTime.now().plusHours(1))));
+        itemRepository.find(sqlQuerySpec2).forEach(item -> {
+            logger.info("id:{}  name:{}", item.id, item.name);
         });
     }
 }

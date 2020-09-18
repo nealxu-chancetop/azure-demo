@@ -46,7 +46,8 @@ public class Item {
 
     @NotNull
     @JsonProperty("created_time")
-    public Long createdTime; //long
+//    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSX") //Standard utc date format
+    public ZonedDateTime createdTime; //long
 
     @NotNull
     @NotBlank
@@ -55,7 +56,6 @@ public class Item {
 
     @NotNull
     @JsonProperty("updated_time")
-//    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSX") //Standard utc date format
     public ZonedDateTime updatedTime;
 
     public static class UnitConversion {

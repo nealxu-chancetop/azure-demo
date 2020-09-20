@@ -135,6 +135,12 @@ public class ItemService {
             logger.info("get by id, {}", item.name);
         });
 
+
+        logger.info("id-2");
+        itemRepository.get("5000010").ifPresentOrElse(
+            item -> logger.info("get by id, {}", item.name),
+            () -> logger.info("not fond id,{}", 5000010));
+
         itemRepository.findOne(new SqlQuerySpec("select * from c where c.id = '500001'")).ifPresent(item -> {
             logger.info("get by find one, {}", item.name);
         });

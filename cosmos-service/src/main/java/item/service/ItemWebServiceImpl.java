@@ -24,7 +24,7 @@ public class ItemWebServiceImpl implements ItemWebService {
 
     @Override
     public void search() {
-//        itemService.testSearch();
-        itemService.searchByDate();
+        itemService.testSearch();
+//        itemService.searchByDate();
     }
 }

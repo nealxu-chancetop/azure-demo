@@ -1,6 +1,8 @@
 package core.framework.cosmos.impl;
 
 import com.azure.cosmos.CosmosContainer;
+import com.azure.cosmos.CosmosException;
+import com.azure.cosmos.implementation.HttpConstants;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
@@ -51,6 +53,10 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
             CosmosItemResponse<T> result = cosmosContainer().readItem(id, new PartitionKey(id), entityClass);
             if (result != null && result.getItem() != null) returnedDocs = 1;
             return result == null ? Optional.empty() : Optional.ofNullable(result.getItem());
+        } catch (CosmosException ex) {
+            if (ex.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND)
+                return Optional.empty();
+            throw ex;
         } finally {
             long elapsed = watch.elapsed();
             ActionLogContext.track("cosmos", elapsed, returnedDocs, 0);

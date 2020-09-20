@@ -77,3 +77,10 @@ configure([project(':cosmos-service')]) {
         implementation "com.azure:azure-cosmos:${azureCosmosVersion}"
     }
 }
+
+configure([project(':cosmos-db-migration')]) {
+    dependencies {
+        implementation project(':core-ng-cosmos')
+        implementation "com.azure:azure-cosmos:${azureCosmosVersion}"
+    }
+}

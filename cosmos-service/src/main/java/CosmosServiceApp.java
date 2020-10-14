@@ -18,12 +18,14 @@ public class CosmosServiceApp extends App {
         load(new SystemModule("sys.properties"));
         loadProperties("cosmos.properties");
 
+        //add cosmos config
         CosmosConfig cosmosConfig = config(CosmosConfig.class);
         cosmosConfig.databaseId(requiredProperty("cosmos.databaseId"));
         cosmosConfig.endpoint(requiredProperty("cosmos.endpoint"));
         cosmosConfig.key(requiredProperty("cosmos.key"));
         cosmosConfig.preferredRegions(List.of(requiredProperty("cosmos.preferredRegions").split(",")));
 
+        //register entity
         cosmosConfig.entity(Item.class);
         cosmosConfig.entity(BOMHeader.class);
 

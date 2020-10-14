@@ -6,11 +6,12 @@ import com.azure.cosmos.implementation.HttpConstants;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
+import com.azure.cosmos.models.FeedResponse;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.models.SqlQuerySpec;
 import com.azure.cosmos.util.CosmosPagedIterable;
-import core.framework.cosmos.Entity;
 import core.framework.cosmos.CosmosRepository;
+import core.framework.cosmos.Entity;
 import core.framework.internal.validate.Validator;
 import core.framework.log.ActionLogContext;
 import core.framework.log.Markers;
@@ -20,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,23 +47,25 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
     public Optional<T> get(String id) {
         StopWatch watch = new StopWatch();
         if (Strings.isBlank(id)) throw new Error("id must not be null");
-
+        double requestCharge = 0d; //todo maybe trace each charge, two precision
         int returnedDocs = 0;
         try {
             CosmosItemResponse<T> result = cosmosContainer().readItem(id, new PartitionKey(id), entityClass);
+            requestCharge = result.getRequestCharge();
             if (result != null && result.getItem() != null) returnedDocs = 1;
             return result == null ? Optional.empty() : Optional.ofNullable(result.getItem());
         } catch (CosmosException ex) {
-            if (ex.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND)
+            if (ex.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND)//404 + 429
                 return Optional.empty();
             throw ex;
         } finally {
             long elapsed = watch.elapsed();
             ActionLogContext.track("cosmos", elapsed, returnedDocs, 0);
-            logger.debug("get, entity={}, id={}, returnedDocs={}, elapsed={}",
+            logger.debug("get, entity={}, id={}, returnedDocs={}, requestCharge={}, elapsed={}",
                 entityName,
                 id,
                 returnedDocs,
+                requestCharge,
                 elapsed);
             checkSlowOperation(elapsed);
         }
@@ -73,12 +75,14 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
     public void upsert(T entity) {
         var watch = new StopWatch();
         validator.validate(entity, false);
+        double requestCharge = 0d;
         try {
-            cosmosContainer().upsertItem(entity);
+            CosmosItemResponse<T> response = cosmosContainer().upsertItem(entity);
+            requestCharge = response.getRequestCharge();
         } finally {
             long elapsed = watch.elapsed();
             ActionLogContext.track("cosmos", elapsed, 0, 1);
-            logger.debug("upsert, entity={}, elapsed={}", entityName, elapsed);
+            logger.debug("upsert, entity={}, requestCharge={}, elapsed={}", entityName, requestCharge, elapsed);
             checkSlowOperation(elapsed);
         }
     }
@@ -87,12 +91,14 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
     public void insert(T entity) {
         var watch = new StopWatch();
         validator.validate(entity, false);
+        double requestCharge = 0d;
         try {
-            cosmosContainer().createItem(entity);
+            CosmosItemResponse<T> response = cosmosContainer().createItem(entity);
+            requestCharge = response.getRequestCharge();
         } finally {
             long elapsed = watch.elapsed();
             ActionLogContext.track("cosmos", elapsed, 0, 1);
-            logger.debug("insert, entity={}, elapsed={}", entityName, elapsed);
+            logger.debug("insert, entity={}, requestCharge={}, elapsed={}", entityName, requestCharge, elapsed);
             checkSlowOperation(elapsed);
         }
     }
@@ -106,10 +112,11 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
     public <V> Optional<V> findOne(SqlQuerySpec query, Class<V> clazz) {
         var watch = new StopWatch();
         int returnedDocs = 0;
+        double requestCharge = 0d;
         try {
             List<V> results = new ArrayList<>();
             CosmosPagedIterable<V> items = cosmosContainer().queryItems(query, new CosmosQueryRequestOptions(), clazz);
-            fetch(items, results);
+            requestCharge = fetch(items, results);
             if (results.isEmpty()) return Optional.empty();
             if (results.size() > 1) throw new Error("more than one row returned");
             returnedDocs = 1;
@@ -117,11 +124,12 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
         } finally {
             long elapsed = watch.elapsed();
             ActionLogContext.track("cosmos", elapsed, returnedDocs, 0);
-            logger.debug("findOne, class={}, sql={}, params={}, returnedDocs={}, elapsed={}",
+            logger.debug("findOne, class={}, sql={}, params={}, returnedDocs={}, requestCharge={}, elapsed={}",
                 clazz.getSimpleName(),
                 query.getQueryText(),
                 query.getParameters(),
                 returnedDocs,
+                requestCharge,
                 elapsed);
             checkSlowOperation(elapsed);
         }
@@ -136,20 +144,23 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
     public <V> List<V> find(SqlQuerySpec query, Class<V> clazz) {
         var watch = new StopWatch();
         List<V> results = new ArrayList<>();
+        double requestCharge = 0d;
         try {
             CosmosPagedIterable<V> items = cosmosContainer().queryItems(query, new CosmosQueryRequestOptions(), clazz);
-            fetch(items, results);
+            items.iterableByPage().forEach(page -> page.getRequestCharge());
+            requestCharge = fetch(items, results);
             checkTooManyRowsReturned(results.size());
             return results;
         } finally {
             long elapsed = watch.elapsed();
             int size = results.size();
             ActionLogContext.track("cosmos", elapsed, size, 0);
-            logger.debug("find, clazz={}, sql={}, params={}, returnedDocs={}, elapsed={}",
+            logger.debug("find, clazz={}, sql={}, params={}, returnedDocs={}, requestCharge={}, elapsed={}",
                 entityName,
                 query.getQueryText(),
                 query.getParameters(),
                 size,
+                requestCharge,
                 elapsed);
             checkSlowOperation(elapsed);
         }
@@ -158,21 +169,25 @@ public class CosmosEntityImpl<T> implements CosmosRepository<T> {
     @Override
     public void delete(String id) {
         var watch = new StopWatch();
+        double requestCharge = 0d;
         try {
-            cosmosContainer().deleteItem(id, new PartitionKey(id), new CosmosItemRequestOptions());
+            CosmosItemResponse<Object> response = cosmosContainer().deleteItem(id, new PartitionKey(id), new CosmosItemRequestOptions());
+            requestCharge = response.getRequestCharge();
         } finally {
             long elapsed = watch.elapsed();
             ActionLogContext.track("cosmos", elapsed, 0, 1);
-            logger.debug("delete, entity={}, id={}, elapsed={}", entityName, id, elapsed);
+            logger.debug("delete, entity={}, id={}, requestCharge={}, elapsed={}", entityName, id, requestCharge, elapsed);
             checkSlowOperation(elapsed);
         }
     }
 
-    private <V> void fetch(CosmosPagedIterable<V> iterable, List<V> results) {
-        Iterator<V> iterator = iterable.iterator();
-        while (iterator.hasNext()) {
-            results.add(iterator.next());
+    private <V> double fetch(CosmosPagedIterable<V> iterable, List<V> results) {
+        double requestCharge = 0d;
+        for (FeedResponse<V> response : iterable.iterableByPage()) {
+            requestCharge += response.getRequestCharge();
+            response.getElements().forEach(element -> results.add(element));
         }
+        return requestCharge;
     }
 
     private void checkSlowOperation(long elapsed) {

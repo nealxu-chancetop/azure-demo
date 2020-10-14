@@ -39,10 +39,10 @@ public class CosmosConfig extends Config {
 
         cosmos = new CosmosImpl();
         //enable cosmos jsr310
+        //todo custom objectMapper
         ObjectMapper objectMapper = Utils.getSimpleObjectMapper();
         objectMapper.registerModule(new ZonedDateTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
 
         this.context.startupHook.add(cosmos::initialize);
         this.context.shutdownHook.add(ShutdownHook.STAGE_7, timeout -> cosmos.close());

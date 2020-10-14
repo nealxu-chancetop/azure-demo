@@ -147,7 +147,7 @@ public class ItemService {
 
         //select name like
         logger.info("name like");
-        itemRepository.find(new SqlQuerySpec("select * from c where CONTAINS(c.name,'test',false) ORDER BY c.createdTime DESC")).forEach(item -> {
+        itemRepository.find(new SqlQuerySpec("select c. from c where CONTAINS(c.name,'test',false) ORDER BY c.createdTime DESC")).forEach(item -> {
             logger.info(item.name);
         });
 
